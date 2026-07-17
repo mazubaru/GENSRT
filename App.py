@@ -12,6 +12,12 @@ def format_srt_time(seconds):
     millis = td.microseconds // 1000
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
+# วางฟังก์ชันที่หายไปตรงนี้ครับ
+def clean_json_response(text):
+    text = re.sub(r'^```json\s*|\s*```$', '', text, flags=re.MULTILINE)
+    text = re.sub(r'^```\s*|\s*```$', '', text, flags=re.MULTILINE)
+    return text.strip()
+
 def generate_srt(chunks, mode, chars_per_sec, total_video_seconds, gap):
     srt_lines = []
     current_time = 0.0
