@@ -99,7 +99,7 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
                 
                 # 1. เปลี่ยนชื่อโมเดลเป็นรุ่นล่าสุด (เช่น gemini-2.5-flash) 
                 # หรือถ้าต้องการโมเดลฉลาดพิเศษสำหรับงานซับซ้อนให้ใช้ gemini-2.5-pro
-                model_name = "gemini-2.5-flash" 
+               model_name = "gemini-3-flash" 
                 
                 try:
                     # 2. ปรับการตั้งค่าผ่าน GenerationConfig เพื่อบังคับให้ตอบกลับเป็น JSON ที่เสถียรที่สุด
