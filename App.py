@@ -97,13 +97,10 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
             try:
                 genai.configure(api_key=api_key)
                 
-                # 1. เปลี่ยนชื่อโมเดลเป็นรุ่นล่าสุด (เช่น gemini-2.5-flash) 
-                # หรือถ้าต้องการโมเดลฉลาดพิเศษสำหรับงานซับซ้อนให้ใช้ gemini-2.5-pro
-               model_name = "gemini-3-flash" 
+                # เปลี่ยนมาใช้โมเดลล่าสุดตามคำแนะนำระบบ
+                model_name = "gemini-3-flash"
                 
                 try:
-                    # 2. ปรับการตั้งค่าผ่าน GenerationConfig เพื่อบังคับให้ตอบกลับเป็น JSON ที่เสถียรที่สุด
-                    # และป้องกันปัญหา JSONDecodeError ในอนาคต
                     config = genai.types.GenerationConfig(
                         response_mime_type="application/json"
                     )
@@ -128,14 +125,9 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
                 {raw_text}
                 """
                 
-                # 3. เรียกใช้งานโดยไม่ต้องส่งอาร์กิวเมนต์ยิบย่อย เพราะตั้งค่าในตัวแปร model ไว้แล้ว
                 response = model.generate_content(prompt)
-                
                 json_str = clean_json_response(response.text)
                 chunks = json.loads(json_str)
-                
-                # ไม่ต้องใช้ clean_json_response อีกต่อไป เพราะ API ส่ง JSON ที่ถูกต้องตามหลักไวยากรณ์มาให้แล้ว
-                chunks = json.loads(response.text)
                 
                 # สร้าง SRT
                 srt_content = generate_srt(chunks, timing_mode, chars_per_sec, total_video_seconds, gap)
@@ -157,6 +149,6 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
                 )
                 
             except json.JSONDecodeError:
-                st.error("เกิดข้อผิดพลาดในการอ่านค่า JSON จาก AI กรุณาลองใหม่อีกครั้ง")
+                st.error("AI ส่งค่ากลับมาไม่อยู่ในรูปแบบ JSON กรุณาลองใหม่อีกครั้ง (บางครั้ง AI อาจตอบยาวเกินไป)")
             except Exception as e:
-                st.error(f"เกิดข้อผิดพลาด: {e}")
+                st.error(f"เกิดข้อผิดพลาดที่ไม่คาดคิด: {e}")
