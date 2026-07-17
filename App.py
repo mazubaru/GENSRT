@@ -1,6 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 import json
+import re  # <-- เพิ่มบรรทัดนี้เข้าไปครับ
 from datetime import timedelta
 
 # --- ฟังก์ชันช่วย ---
