@@ -23,14 +23,10 @@ def generate_srt(chunks, mode, chars_per_sec, total_video_seconds, gap):
     current_time = 0.0
     
     if mode == "Sync to Video" and total_video_seconds > 0:
-        # โหมดปรับเวลาให้พอดีกับความยาววิดีโอ
         total_chars = sum(len(c) for c in chunks)
         if total_chars == 0: return ""
         
-        # คำนวณเวลาดิบของแต่ละท่อนตามสัดส่วนความยาวคำ
         raw_durations = [(len(c) / total_chars) * total_video_seconds for c in chunks]
-        
-        # หักเวลาคั่น (gap) ออก เพื่อให้เวลาพูดรวมพอดีกับวิดีโอ
         available_time = total_video_seconds - (len(chunks) - 1) * gap
         if available_time < 0: available_time = 0
         
@@ -41,17 +37,13 @@ def generate_srt(chunks, mode, chars_per_sec, total_video_seconds, gap):
             duration = final_durations[i]
             start_time = current_time
             end_time = start_time + duration
-            
             srt_lines.append(f"{i+1}\n{format_srt_time(start_time)} --> {format_srt_time(end_time)}\n{text}\n")
             current_time = end_time + gap
-            
     else:
-        # โหมดความเร็วคงที่ (Fixed Speed)
         for i, text in enumerate(chunks):
             duration = len(text) / chars_per_sec
             start_time = current_time
             end_time = start_time + duration
-            
             srt_lines.append(f"{i+1}\n{format_srt_time(start_time)} --> {format_srt_time(end_time)}\n{text}\n")
             current_time = end_time + gap
             
@@ -65,7 +57,7 @@ st.caption("ใช้ AI ช่วยแก้คำผิด/สระหาย
 # 1. API Key
 with st.expander("⚙️ ตั้งค่า Gemini API Key", expanded=False):
     api_key = st.text_input("ใส่ Gemini API Key ของคุณ:", type="password")
-    st.caption("ขอ Key ฟรีได้ที่ [Google AI Studio](https://aistudio.google.com/app/apikey) (ไม่ต้องเสียเงิน)")
+    st.caption("ขอ Key ฟรีได้ที่ [Google AI Studio](https://aistudio.google.com/app/apikey)")
 
 # 2. รับข้อความ
 st.subheader("1. ข้อความต้นฉบับ (Raw Text)")
@@ -80,7 +72,7 @@ else:
     if uploaded_file:
         raw_text = uploaded_file.read().decode("utf-8")
 
-# 3. ตั้งค่าเวลา (เพิ่มฟีเจอร์ใหม่)
+# 3. ตั้งค่าเวลา
 st.subheader("2. ตั้งค่าความยาวและจังหวะซับไตเติ้ล")
 timing_mode = st.radio("โหมดการคำนวณเวลา", 
                        ("🎯 ปรับให้พอดีกับความยาววิดีโอ (Sync to Video)", "⏱️ ความเร็วในการอ่านคงที่ (Fixed Speed)"), 
@@ -89,14 +81,13 @@ timing_mode = st.radio("โหมดการคำนวณเวลา",
 gap = st.slider("เวลาคั่นระหว่างท่อน (วินาที)", 0.0, 0.5, 0.1, 0.05)
 
 if timing_mode.startswith("🎯"):
-    st.info("ระบบจะคำนวณเวลาแต่ละคำให้จบพอดีกับความยาววิดีโอที่คุณกำหนด")
     col1, col2 = st.columns(2)
     with col1:
         total_minutes = st.number_input("ความยาววิดีโอ (นาที)", min_value=0, value=1)
     with col2:
         total_seconds_input = st.number_input("ความยาววิดีโอ (วินาที)", min_value=0, max_value=59, value=30)
     total_video_seconds = (total_minutes * 60) + total_seconds_input
-    chars_per_sec = 5.0 # ตัวแปรสำรอง
+    chars_per_sec = 5.0 
 else:
     total_video_seconds = 0
     chars_per_sec = st.slider("ความเร็วในการอ่าน (ตัวอักษร/วินาที)", 3.0, 15.0, 5.0, 0.5)
@@ -111,8 +102,32 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
         with st.spinner("🧠 AI กำลังตรวจสอบคำผิดและหั่นข้อความ..."):
             try:
                 genai.configure(api_key=api_key)
-                # อัปเดตเป็นโมเดลตัวใหม่ล่าสุด (แก้ Error 404)
-                model = genai.GenerativeModel('gemini-2.0-flash') 
+                
+                # รายชื่อโมเดลที่เสถียรและฟรี เรียงตามลำดับความสำคัญ
+                model_names_to_try = [
+                    "gemini-1.5-flash",
+                    "gemini-1.5-flash-latest",
+                    "gemini-1.5-pro"
+                ]
+                
+                model = None
+                last_error = None
+                
+                # ระบบลองผิดลองถูก (Fallback) ถ้าโมเดลแรกใช้ไม่ได้ จะลองตัวถัดไปอัตโนมัติ
+                for model_name in model_names_to_try:
+                    try:
+                        model = genai.GenerativeModel(model_name)
+                        # ทดสอบเรียกใช้งานง่ายๆ
+                        model.generate_content("test")
+                        st.success(f"✅ เชื่อมต่อกับโมเดล '{model_name}' สำเร็จ!")
+                        break
+                    except Exception as e:
+                        last_error = e
+                        continue
+                
+                if model is None:
+                    st.error(f"ไม่สามารถเชื่อมต่อกับโมเดลใดๆ ได้ กรุณาตรวจสอบ API Key หรือลองใหม่อีกครั้ง\n(ข้อผิดพลาดล่าสุด: {last_error})")
+                    st.stop()
                 
                 prompt = f"""
                 คุณคือผู้ช่วยสร้างซับไตเติลมืออาชีพ
@@ -150,6 +165,6 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
                 )
                 
             except json.JSONDecodeError:
-                st.error("AI ส่งค่ากลับมาไม่อยู่ในรูปแบบ JSON กรุณาลองใหม่อีกครั้ง")
+                st.error("AI ส่งค่ากลับมาไม่อยู่ในรูปแบบ JSON กรุณาลองใหม่อีกครั้ง (บางครั้ง AI อาจตอบยาวเกินไป)")
             except Exception as e:
-                st.error(f"เกิดข้อผิดพลาด: {e}")
+                st.error(f"เกิดข้อผิดพลาดที่ไม่คาดคิด: {e}")
