@@ -97,11 +97,24 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
             try:
                 genai.configure(api_key=api_key)
                 
-                # ใช้ชื่อโมเดลที่เสถียรและมีการสนับสนุน JSON Schema เต็มรูปแบบใน v1beta
-                # (gemini-2.0-flash หรือ gemini-1.5-flash-latest คือตัวเลือกที่การันตีว่าไม่ 404)
-                model_name = "gemini-2.0-flash" 
+                # 1. เปลี่ยนชื่อโมเดลเป็นรุ่นล่าสุด (เช่น gemini-2.5-flash) 
+                # หรือถ้าต้องการโมเดลฉลาดพิเศษสำหรับงานซับซ้อนให้ใช้ gemini-2.5-pro
+                model_name = "gemini-2.5-flash" 
                 
-                model = genai.GenerativeModel(model_name)
+                try:
+                    # 2. ปรับการตั้งค่าผ่าน GenerationConfig เพื่อบังคับให้ตอบกลับเป็น JSON ที่เสถียรที่สุด
+                    # และป้องกันปัญหา JSONDecodeError ในอนาคต
+                    config = genai.types.GenerationConfig(
+                        response_mime_type="application/json"
+                    )
+                    
+                    model = genai.GenerativeModel(
+                        model_name=model_name,
+                        generation_config=config
+                    )
+                except Exception as e:
+                    st.error(f"ไม่สามารถตั้งค่าโมเดล {model_name} ได้: {e}")
+                    st.stop()
                 
                 prompt = f"""
                 คุณคือผู้ช่วยสร้างซับไตเติลมืออาชีพ
@@ -109,16 +122,17 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
                 1. ตรวจสอบและแก้ไขข้อความต่อไปนี้มีคำผิด สระหาย หรือตัวสะกดผิด ให้ถูกต้องตามบริบทของภาษาไทย
                 2. นำข้อความที่แก้ไขแล้ว มาหั่นเป็นท่อนสั้นๆ (ท่อนละ 1-4 คำ) สำหรับทำซับไตเติลสไตล์ TikTok/Reels
                 3. ส่งผลลัพธ์เป็น JSON Array ของสตริงเท่านั้น เช่น ["ทำอะไร", "ให้ดู", "ปาดเดียว", "รู้เรื่อง", "ปึ้ง"]
+                ห้ามมีข้อความอธิบายอื่นๆ นอกเหนือจาก JSON Array
                 
                 ข้อความต้นฉบับ:
                 {raw_text}
                 """
                 
-                # 🌟 จุดเปลี่ยนสำคัญ: บังคับให้ API ส่งกลับมาเป็น JSON เพียวๆ
-                response = model.generate_content(
-                    prompt,
-                    generation_config={"response_mime_type": "application/json"}
-                )
+                # 3. เรียกใช้งานโดยไม่ต้องส่งอาร์กิวเมนต์ยิบย่อย เพราะตั้งค่าในตัวแปร model ไว้แล้ว
+                response = model.generate_content(prompt)
+                
+                json_str = clean_json_response(response.text)
+                chunks = json.loads(json_str)
                 
                 # ไม่ต้องใช้ clean_json_response อีกต่อไป เพราะ API ส่ง JSON ที่ถูกต้องตามหลักไวยากรณ์มาให้แล้ว
                 chunks = json.loads(response.text)
