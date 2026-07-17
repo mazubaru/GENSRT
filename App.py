@@ -1,7 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
 import json
-import re
 from datetime import timedelta
 
 # --- ฟังก์ชันช่วย ---
@@ -12,11 +11,6 @@ def format_srt_time(seconds):
     secs = td.seconds % 60
     millis = td.microseconds // 1000
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
-
-def clean_json_response(text):
-    text = re.sub(r'^```json\s*|\s*```$', '', text, flags=re.MULTILINE)
-    text = re.sub(r'^```\s*|\s*```$', '', text, flags=re.MULTILINE)
-    return text.strip()
 
 def generate_srt(chunks, mode, chars_per_sec, total_video_seconds, gap):
     srt_lines = []
@@ -103,31 +97,11 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
             try:
                 genai.configure(api_key=api_key)
                 
-                # รายชื่อโมเดลที่เสถียรและฟรี เรียงตามลำดับความสำคัญ
-                model_names_to_try = [
-                    "gemini-1.5-flash",
-                    "gemini-1.5-flash-latest",
-                    "gemini-1.5-pro"
-                ]
+                # ใช้ชื่อโมเดลที่เสถียรและมีการสนับสนุน JSON Schema เต็มรูปแบบใน v1beta
+                # (gemini-2.0-flash หรือ gemini-1.5-flash-latest คือตัวเลือกที่การันตีว่าไม่ 404)
+                model_name = "gemini-2.0-flash" 
                 
-                model = None
-                last_error = None
-                
-                # ระบบลองผิดลองถูก (Fallback) ถ้าโมเดลแรกใช้ไม่ได้ จะลองตัวถัดไปอัตโนมัติ
-                for model_name in model_names_to_try:
-                    try:
-                        model = genai.GenerativeModel(model_name)
-                        # ทดสอบเรียกใช้งานง่ายๆ
-                        model.generate_content("test")
-                        st.success(f"✅ เชื่อมต่อกับโมเดล '{model_name}' สำเร็จ!")
-                        break
-                    except Exception as e:
-                        last_error = e
-                        continue
-                
-                if model is None:
-                    st.error(f"ไม่สามารถเชื่อมต่อกับโมเดลใดๆ ได้ กรุณาตรวจสอบ API Key หรือลองใหม่อีกครั้ง\n(ข้อผิดพลาดล่าสุด: {last_error})")
-                    st.stop()
+                model = genai.GenerativeModel(model_name)
                 
                 prompt = f"""
                 คุณคือผู้ช่วยสร้างซับไตเติลมืออาชีพ
@@ -135,15 +109,19 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
                 1. ตรวจสอบและแก้ไขข้อความต่อไปนี้มีคำผิด สระหาย หรือตัวสะกดผิด ให้ถูกต้องตามบริบทของภาษาไทย
                 2. นำข้อความที่แก้ไขแล้ว มาหั่นเป็นท่อนสั้นๆ (ท่อนละ 1-4 คำ) สำหรับทำซับไตเติลสไตล์ TikTok/Reels
                 3. ส่งผลลัพธ์เป็น JSON Array ของสตริงเท่านั้น เช่น ["ทำอะไร", "ให้ดู", "ปาดเดียว", "รู้เรื่อง", "ปึ้ง"]
-                ห้ามมีข้อความอธิบายอื่นๆ นอกเหนือจาก JSON Array
                 
                 ข้อความต้นฉบับ:
                 {raw_text}
                 """
                 
-                response = model.generate_content(prompt)
-                json_str = clean_json_response(response.text)
-                chunks = json.loads(json_str)
+                # 🌟 จุดเปลี่ยนสำคัญ: บังคับให้ API ส่งกลับมาเป็น JSON เพียวๆ
+                response = model.generate_content(
+                    prompt,
+                    generation_config={"response_mime_type": "application/json"}
+                )
+                
+                # ไม่ต้องใช้ clean_json_response อีกต่อไป เพราะ API ส่ง JSON ที่ถูกต้องตามหลักไวยากรณ์มาให้แล้ว
+                chunks = json.loads(response.text)
                 
                 # สร้าง SRT
                 srt_content = generate_srt(chunks, timing_mode, chars_per_sec, total_video_seconds, gap)
@@ -165,6 +143,6 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
                 )
                 
             except json.JSONDecodeError:
-                st.error("AI ส่งค่ากลับมาไม่อยู่ในรูปแบบ JSON กรุณาลองใหม่อีกครั้ง (บางครั้ง AI อาจตอบยาวเกินไป)")
+                st.error("เกิดข้อผิดพลาดในการอ่านค่า JSON จาก AI กรุณาลองใหม่อีกครั้ง")
             except Exception as e:
-                st.error(f"เกิดข้อผิดพลาดที่ไม่คาดคิด: {e}")
+                st.error(f"เกิดข้อผิดพลาด: {e}")
