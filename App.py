@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import timedelta
 import re
-
+from pythainlp import word_tokenize
 # --- ฟังก์ชันช่วย (Helper Functions) ---
 def format_srt_time(seconds):
     """แปลงวินาทีให้เป็นรูปแบบเวลาของ SRT"""
