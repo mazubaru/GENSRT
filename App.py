@@ -23,24 +23,34 @@ def generate_srt(chunks, mode, chars_per_sec, total_video_seconds, gap):
     srt_lines = []
     current_time = 0.0
     
-    if mode == "Sync to Video" and total_video_seconds > 0:
+    if mode == "🎯 ปรับให้พอดีกับความยาววิดีโอ (Sync to Video)" and total_video_seconds > 0:
         total_chars = sum(len(c) for c in chunks)
         if total_chars == 0: return ""
         
-        raw_durations = [(len(c) / total_chars) * total_video_seconds for c in chunks]
-        available_time = total_video_seconds - (len(chunks) - 1) * gap
-        if available_time < 0: available_time = 0
+        # 1. หาเวลาที่ต้องใช้คั่น (Gap ทั้งหมด)
+        total_gaps_time = (len(chunks) - 1) * gap
         
-        scale_factor = available_time / sum(raw_durations) if sum(raw_durations) > 0 else 1
-        final_durations = [d * scale_factor for d in raw_durations]
-        
+        # 2. เวลาเนื้อๆ ที่เหลือให้ตัวอักษรเฉลี่ยกัน
+        available_time = total_video_seconds - total_gaps_time
+        if available_time < 0: 
+            available_time = 0  # กันเหนียวถ้าตัวคั่นเยอะเกินไป
+            
+        # 3. คำนวณเวลาเฉลี่ยตามจำนวนตัวอักษรจริง
         for i, text in enumerate(chunks):
-            duration = final_durations[i]
+            # สัดส่วนความยาวตามจำนวนตัวอักษรของท่อนนั้นๆ
+            char_ratio = len(text) / total_chars
+            duration = char_ratio * available_time
+            
             start_time = current_time
             end_time = start_time + duration
+            
             srt_lines.append(f"{i+1}\n{format_srt_time(start_time)} --> {format_srt_time(end_time)}\n{text}\n")
+            
+            # เวลาเริ่มต้นของท่อนถัดไป คือ เวลาจบ + เวลาคั่น
             current_time = end_time + gap
+            
     else:
+        # โหมด Fixed Speed (ความเร็วคงที่) ทำงานปกติ
         for i, text in enumerate(chunks):
             duration = len(text) / chars_per_sec
             start_time = current_time
