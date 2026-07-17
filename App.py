@@ -93,12 +93,12 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
     elif not raw_text.strip():
         st.warning("กรุณาใส่ข้อความก่อนนะครับ!")
     else:
-        with st.spinner("🧠 AI กำลังตรวจสอบคำผิดและหั่นข้อความ..."):
+       with st.spinner("🧠 AI กำลังตรวจสอบคำผิดและหั่นข้อความ..."):
             try:
                 genai.configure(api_key=api_key)
                 
-                # เปลี่ยนมาใช้โมเดลล่าสุดตามคำแนะนำระบบ
-                model_name = "gemini-3-flash"
+                # เปลี่ยนชื่อโมเดลตรงนี้เป็นรุ่นที่สมบูรณ์และเปิดใช้งานแล้ว
+                model_name = "gemini-3.5-flash" 
                 
                 try:
                     config = genai.types.GenerationConfig(
