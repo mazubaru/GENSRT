@@ -71,10 +71,10 @@ st.markdown(
             radial-gradient(circle at 20% 30%, rgba(40, 40, 40, 0.4) 0%, transparent 60%),
             radial-gradient(circle at 80% 70%, rgba(20, 20, 20, 0.6) 0%, transparent 50%),
             /* Layer 2: ลายเส้นตัดแนวตั้ง/แนวนอนบางๆ เลียนแบบผ้ากระสอบหรือปูนดิบ */
-            linear-gradient(rgba(255, 255, 255, 0.03) 10px, transparent 1px),
+            linear-gradient(rgba(255, 255, 255, 0.03) 20px, transparent 1px),
             linear-gradient(90deg, rgba(255, 255, 255, 0.03) 10px, transparent 1px),
             /* Layer 3: เม็ด Noise ถี่ๆ สไตล์ขาวดำดิจิทัล */
-            radial-gradient(rgba(255, 255, 255, 0.05) 2px, transparent 0);
+            radial-gradient(rgba(255, 255, 255, 0.05) 10px, transparent 0);
         
         /* ตั้งค่าขนาดของลายเพื่อให้เกิด Texture ถี่ๆ */
         background-size: 100% 100%, 100% 100%, 20px 20px, 20px 20px, 4px 4px;
