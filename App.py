@@ -60,46 +60,50 @@ def generate_srt(chunks, mode, chars_per_sec, total_video_seconds, gap):
 
 # --- UI Streamlit ---
 st.set_page_config(page_title="Smart Text to SRT", layout="centered")
-import base64
-
-def get_base64_image(image_path):
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
-
-try:
-    # เรียกไฟล์ภาพที่อัปโหลดขึ้น GitHub
-    encoded_string = get_base64_image("grunge_bg.jpg")
+st.markdown(
+    """
+    <style>
+    /* สร้างพื้นหลังสไตล์ Dark Industrial/Grunge Concrete */
+    .stApp {
+        background-color: #121212;
+        background-image: 
+            /* Layer 1: รอยคราบและแสงเงาแบบสุ่ม (Vignette & Grunge Shadows) */
+            radial-gradient(circle at 20% 30%, rgba(40, 40, 40, 0.4) 0%, transparent 60%),
+            radial-gradient(circle at 80% 70%, rgba(20, 20, 20, 0.6) 0%, transparent 50%),
+            /* Layer 2: ลายเส้นตัดแนวตั้ง/แนวนอนบางๆ เลียนแบบผ้ากระสอบหรือปูนดิบ */
+            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            /* Layer 3: เม็ด Noise ถี่ๆ สไตล์ขาวดำดิจิทัล */
+            radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0);
+        
+        /* ตั้งค่าขนาดของลายเพื่อให้เกิด Texture ถี่ๆ */
+        background-size: 100% 100%, 100% 100%, 20px 20px, 20px 20px, 4px 4px;
+        background-attachment: fixed;
+    }
     
-    st.markdown(
-        f"""
-        <style>
-        /* เปลี่ยนพื้นหลังหลักของแอป */
-        .stApp {{
-            background-image: url("data:image/jpeg;base64,{encoded_string}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
-        
-        /* ปรับสีตัวอักษรของหัวข้อหลักให้เด่นขึ้นเหนือกราฟิกพื้นหลัง */
-        h1, h2, h3, p, span, label {{
-            color: #ffffff !important;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-        }}
-        
-        /* ทำกล่องข้อความ/ป้อนข้อมูลให้โปร่งแสงเล็กน้อยเพื่อให้เห็นลายพื้นหลัง */
-        .stTextArea textarea, .stTextInput input, .stSelectbox div {{
-            background-color: rgba(30, 30, 30, 0.8) !important;
-            color: #ffffff !important;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-except FileNotFoundError:
-    # กันเหนียว: ถ้ายังไม่ได้อัปโหลดไฟล์ภาพ ให้ใช้สีดำธรรมดาแทนไปก่อนเพื่อไม่ให้แอปพัง
-    st.markdown("<style>.stApp { background-color: #111111; }</style>", unsafe_allow_html=True)
+    /* ปรับแต่งตัวอักษรให้คมชัด อ่านง่าย ทะลุพื้นหลังมืด */
+    h1, h2, h3, p, span, label {
+        color: #f0f0f0 !important;
+        font-family: 'Helvetica Neue', sans-serif;
+        text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9);
+    }
+    
+    /* กล่องข้อความและ Input ต่างๆ ปรับให้โมเดิร์นกึ่งโปร่งแสง */
+    .stTextArea textarea, .stTextInput input, .stSelectbox div {
+        background-color: rgba(25, 25, 25, 0.75) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px !important;
+    }
+
+    /* ตกแต่งส่วนหัว (Caption) */
+    .stMarkdown p {
+        color: #b3b3b3 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 st.title("🧠 Smart Text to Short SRT")
 
 # 1. API Key
