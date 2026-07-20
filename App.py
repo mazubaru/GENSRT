@@ -1,7 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 import json
-import re  # <-- เพิ่มบรรทัดนี้เข้าไปครับ
+import re
 from datetime import timedelta
 
 # --- ฟังก์ชันช่วย ---
@@ -13,7 +13,6 @@ def format_srt_time(seconds):
     millis = td.microseconds // 1000
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
-# วางฟังก์ชันที่หายไปตรงนี้ครับ
 def clean_json_response(text):
     text = re.sub(r'^```json\s*|\s*```$', '', text, flags=re.MULTILINE)
     text = re.sub(r'^```\s*|\s*```$', '', text, flags=re.MULTILINE)
@@ -62,7 +61,6 @@ def generate_srt(chunks, mode, chars_per_sec, total_video_seconds, gap):
 # --- UI Streamlit ---
 st.set_page_config(page_title="Smart Text to SRT", layout="centered")
 st.title("🧠 Smart Text to Short SRT")
-st.caption("ใช้ AI ช่วยแก้คำผิด/สระหาย และหั่นข้อความเป็นคำสั้นๆ (รองรับการ Sync ความยาววิดีโอ)")
 
 # 1. API Key
 with st.expander("⚙️ ตั้งค่า Gemini API Key", expanded=False):
