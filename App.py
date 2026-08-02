@@ -156,7 +156,7 @@ if st.button("🚀 สร้างไฟล์ SRT ด้วย AI", type="prima
                 genai.configure(api_key=api_key)
                 
                 # เปลี่ยนชื่อโมเดลตรงนี้เป็นรุ่นที่สมบูรณ์และเปิดใช้งานแล้ว
-                model_name = "gemini-3.5-flash" 
+                model_name = "gemini-3.1-flash-lite" 
                 
                 try:
                     config = genai.types.GenerationConfig(
